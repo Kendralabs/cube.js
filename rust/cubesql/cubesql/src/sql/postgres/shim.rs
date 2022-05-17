@@ -133,6 +133,7 @@ impl AsyncPostgresShim {
             Err(e) => {
                 shim.logger.error(
                     format!("Error during processing PostgreSQL connection: {}", e).as_str(),
+                    None,
                 );
 
                 if let Some(bt) = e.backtrace() {
@@ -204,8 +205,10 @@ impl AsyncPostgresShim {
         &mut self,
         err: ConnectionError,
     ) -> Result<(), ConnectionError> {
-        self.logger
-            .error(format!("Error during processing PostgreSQL message: {}", err).as_str());
+        self.logger.error(
+            format!("Error during processing PostgreSQL message: {}", err).as_str(),
+            None,
+        );
 
         if let Some(bt) = err.backtrace() {
             trace!("{}", bt);
@@ -555,7 +558,11 @@ impl AsyncPostgresShim {
         let prepared = if parse.query.trim() == "" {
             None
         } else {
-            let query = parse_sql_to_statement(&parse.query, DatabaseProtocol::PostgreSQL)?;
+            let query = parse_sql_to_statement(
+                &parse.query,
+                DatabaseProtocol::PostgreSQL,
+                self.logger.clone(),
+            )?;
 
             let stmt_finder = StatementParamsFinder::new();
             let parameters: Vec<PgTypeId> = stmt_finder
