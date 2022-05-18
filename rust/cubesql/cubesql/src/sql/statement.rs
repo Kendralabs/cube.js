@@ -564,7 +564,6 @@ impl<'ast> Visitor<'ast> for ToTimestampReplacer {
         }
     }
 }
-
 // Some Postgres UDFs accept rows (records) as arguments.
 // We simplify the expression, passing only the required values
 pub struct UdfWildcardArgReplacer {}
@@ -644,6 +643,34 @@ impl<'a> Visitor<'a> for UdfWildcardArgReplacer {
             }
             _ => (),
         };
+}
+
+#[derive(Debug)]
+pub struct SensitiveDataSanitizer {}
+
+impl SensitiveDataSanitizer {
+    pub fn new() -> Self {
+        Self {}
+    }
+}
+
+impl<'ast> Visitor<'ast> for SensitiveDataSanitizer {
+    fn visit_identifier(&mut self, identifier: &mut ast::Ident) {
+        *identifier = ast::Ident {
+            value: "XXX".to_string(),
+            quote_style: identifier.quote_style,
+        };
+    }
+
+    fn visit_value(&mut self, val: &mut ast::Value) {
+        match val {
+            ast::Value::SingleQuotedString(str)
+            | ast::Value::DoubleQuotedString(str)
+            | ast::Value::NationalStringLiteral(str) => {
+                *str = "XXX".to_string();
+            }
+            _ => (),
+        }
     }
 }
 
