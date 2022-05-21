@@ -366,11 +366,13 @@ impl DatabaseProtocol {
             "information_schema" => match table.as_str() {
                 "columns" => {
                     return Some(Arc::new(PostgresSchemaColumnsProvider::new(
+                        &context.session_state.database().unwrap_or("db".to_string()),
                         &context.meta.cubes,
                     )))
                 }
                 "tables" => {
                     return Some(Arc::new(PostgresSchemaTableProvider::new(
+                        &context.session_state.database().unwrap_or("db".to_string()),
                         &context.meta.cubes,
                     )))
                 }
@@ -395,12 +397,19 @@ impl DatabaseProtocol {
             },
             "pg_catalog" => match table.as_str() {
                 "pg_tables" => {
-                    return Some(Arc::new(PgCatalogTableProvider::new(&context.meta.cubes)))
+                    return Some(Arc::new(PgCatalogTableProvider::new(
+                        &context.meta.cubes,
+                        context.session_state.user(),
+                    )))
                 }
                 "pg_type" => {
                     return Some(Arc::new(PgCatalogTypeProvider::new(&context.meta.tables)))
                 }
-                "pg_namespace" => return Some(Arc::new(PgCatalogNamespaceProvider::new())),
+                "pg_namespace" => {
+                    return Some(Arc::new(PgCatalogNamespaceProvider::new(
+                        context.session_state.user(),
+                    )))
+                }
                 "pg_range" => return Some(Arc::new(PgCatalogRangeProvider::new())),
                 "pg_attrdef" => return Some(Arc::new(PgCatalogAttrdefProvider::new())),
                 "pg_attribute" => {
@@ -475,6 +484,7 @@ impl TableProvider for CubeTableProvider {
                             ColumnType::Boolean => DataType::Boolean,
                             ColumnType::Double => DataType::Float64,
                             ColumnType::Int8 => DataType::Int64,
+                            ColumnType::Int16 => DataType::Int64,
                             ColumnType::Int32 => DataType::Int64,
                             ColumnType::Int64 => DataType::Int64,
                             ColumnType::Blob => DataType::Utf8,

@@ -3,7 +3,7 @@ use std::{any::Any, sync::Arc};
 use async_trait::async_trait;
 use datafusion::{
     arrow::{
-        array::{Array, ArrayRef, Int32Builder, StringBuilder, UInt32Builder},
+        array::{Array, ArrayRef, Int32Builder, StringBuilder},
         datatypes::{DataType, Field, Schema, SchemaRef},
         record_batch::RecordBatch,
     },
@@ -14,11 +14,11 @@ use datafusion::{
 };
 
 struct PgCatalogDependBuilder {
-    classid: UInt32Builder,
-    objid: UInt32Builder,
+    classid: Int32Builder,
+    objid: Int32Builder,
     objsubid: Int32Builder,
-    refclassid: UInt32Builder,
-    refobjid: UInt32Builder,
+    refclassid: Int32Builder,
+    refobjid: Int32Builder,
     refobjsubid: Int32Builder,
     deptype: StringBuilder,
 }
@@ -28,11 +28,11 @@ impl PgCatalogDependBuilder {
         let capacity = 10;
 
         Self {
-            classid: UInt32Builder::new(capacity),
-            objid: UInt32Builder::new(capacity),
+            classid: Int32Builder::new(capacity),
+            objid: Int32Builder::new(capacity),
             objsubid: Int32Builder::new(capacity),
-            refclassid: UInt32Builder::new(capacity),
-            refobjid: UInt32Builder::new(capacity),
+            refclassid: Int32Builder::new(capacity),
+            refobjid: Int32Builder::new(capacity),
             refobjsubid: Int32Builder::new(capacity),
             deptype: StringBuilder::new(capacity),
         }
@@ -78,11 +78,11 @@ impl TableProvider for PgCatalogDependProvider {
 
     fn schema(&self) -> SchemaRef {
         Arc::new(Schema::new(vec![
-            Field::new("classid", DataType::UInt32, false),
-            Field::new("objid", DataType::UInt32, false),
+            Field::new("classid", DataType::Int32, false),
+            Field::new("objid", DataType::Int32, false),
             Field::new("objsubid", DataType::Int32, false),
-            Field::new("refclassid", DataType::UInt32, false),
-            Field::new("refobjid", DataType::UInt32, false),
+            Field::new("refclassid", DataType::Int32, false),
+            Field::new("refobjid", DataType::Int32, false),
             Field::new("refobjsubid", DataType::Int32, false),
             Field::new("deptype", DataType::Utf8, false),
         ]))

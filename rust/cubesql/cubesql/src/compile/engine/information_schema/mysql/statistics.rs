@@ -44,7 +44,7 @@ impl InformationSchemaStatisticsBuilder {
         columns.push(Arc::new(self.table_names.finish()));
 
         // NON_UNIQUE
-        columns.push(Arc::new(new_uint32_array_with_placeholder(total, 0)));
+        columns.push(Arc::new(new_uint32_array_with_placeholder(total, Some(0))));
         // INDEX_SCHEMA
         columns.push(Arc::new(new_string_array_with_placeholder(
             total,
@@ -56,7 +56,7 @@ impl InformationSchemaStatisticsBuilder {
             Some("".to_string()),
         )));
         // SEQ_IN_INDEX
-        columns.push(Arc::new(new_uint32_array_with_placeholder(total, 0)));
+        columns.push(Arc::new(new_uint32_array_with_placeholder(total, Some(0))));
         // COLUMN_NAME
         columns.push(Arc::new(new_string_array_with_placeholder(
             total,
@@ -68,7 +68,7 @@ impl InformationSchemaStatisticsBuilder {
             Some("".to_string()),
         )));
         // EXPRESSION
-        columns.push(Arc::new(new_uint32_array_with_placeholder(total, 0)));
+        columns.push(Arc::new(new_uint32_array_with_placeholder(total, Some(0))));
 
         columns
     }

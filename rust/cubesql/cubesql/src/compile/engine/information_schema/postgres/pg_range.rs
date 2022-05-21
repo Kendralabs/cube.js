@@ -4,7 +4,7 @@ use async_trait::async_trait;
 
 use datafusion::{
     arrow::{
-        array::{Array, ArrayRef, StringBuilder, UInt32Builder},
+        array::{Array, ArrayRef, Int32Builder, StringBuilder},
         datatypes::{DataType, Field, Schema, SchemaRef},
         record_batch::RecordBatch,
     },
@@ -15,22 +15,24 @@ use datafusion::{
 };
 
 struct PgRange {
-    rngtypid: u32,
-    rngsubtype: u32,
-    rngmultitypid: u32,
-    rngcollation: u32,
-    rngsubopc: u32,
+    rngtypid: i32,
+    rngsubtype: i32,
+    rngmultitypid: i32,
+    rngcollation: i32,
+    rngsubopc: i32,
     rngcanonical: &'static str,
     rngsubdiff: &'static str,
 }
 
 struct PgCatalogRangeBuilder {
-    rngtypid: UInt32Builder,
-    rngsubtype: UInt32Builder,
-    rngmultitypid: UInt32Builder,
-    rngcollation: UInt32Builder,
-    rngsubopc: UInt32Builder,
+    rngtypid: Int32Builder,
+    rngsubtype: Int32Builder,
+    rngmultitypid: Int32Builder,
+    rngcollation: Int32Builder,
+    rngsubopc: Int32Builder,
+    // TODO: type regproc?
     rngcanonical: StringBuilder,
+    // TODO: type regproc?
     rngsubdiff: StringBuilder,
 }
 
@@ -39,11 +41,11 @@ impl PgCatalogRangeBuilder {
         let capacity = 10;
 
         Self {
-            rngtypid: UInt32Builder::new(capacity),
-            rngsubtype: UInt32Builder::new(capacity),
-            rngmultitypid: UInt32Builder::new(capacity),
-            rngcollation: UInt32Builder::new(capacity),
-            rngsubopc: UInt32Builder::new(capacity),
+            rngtypid: Int32Builder::new(capacity),
+            rngsubtype: Int32Builder::new(capacity),
+            rngmultitypid: Int32Builder::new(capacity),
+            rngcollation: Int32Builder::new(capacity),
+            rngsubopc: Int32Builder::new(capacity),
             rngcanonical: StringBuilder::new(capacity),
             rngsubdiff: StringBuilder::new(capacity),
         }
@@ -156,11 +158,11 @@ impl TableProvider for PgCatalogRangeProvider {
 
     fn schema(&self) -> SchemaRef {
         Arc::new(Schema::new(vec![
-            Field::new("rngtypid", DataType::UInt32, false),
-            Field::new("rngsubtype", DataType::UInt32, false),
-            Field::new("rngmultitypid", DataType::UInt32, false),
-            Field::new("rngcollation", DataType::UInt32, false),
-            Field::new("rngsubopc", DataType::UInt32, false),
+            Field::new("rngtypid", DataType::Int32, false),
+            Field::new("rngsubtype", DataType::Int32, false),
+            Field::new("rngmultitypid", DataType::Int32, false),
+            Field::new("rngcollation", DataType::Int32, false),
+            Field::new("rngsubopc", DataType::Int32, false),
             Field::new("rngcanonical", DataType::Utf8, false),
             Field::new("rngsubdiff", DataType::Utf8, false),
         ]))

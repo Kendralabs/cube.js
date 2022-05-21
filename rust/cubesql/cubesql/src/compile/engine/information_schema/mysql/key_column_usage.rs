@@ -96,7 +96,7 @@ impl TableProvider for InfoSchemaKeyColumnUsageProvider {
             Some("".to_string()),
         )));
         // ORDINAL_POSITION
-        data.push(Arc::new(new_uint32_array_with_placeholder(0, 0)));
+        data.push(Arc::new(new_uint32_array_with_placeholder(0, Some(0))));
         // POSITION_IN_UNIQUE_CONSTRAINT
         data.push(Arc::new(new_boolean_array_with_placeholder(0, false)));
         data.push(Arc::new(new_string_array_with_placeholder(

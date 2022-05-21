@@ -6,8 +6,7 @@ use crate::transport::CubeMetaTable;
 use datafusion::{
     arrow::{
         array::{
-            Array, ArrayRef, BooleanBuilder, Int16Builder, Int32Builder, StringBuilder,
-            UInt32Builder,
+            Array, ArrayRef, BooleanBuilder, Int16Builder, Int32Builder, ListBuilder, StringBuilder,
         },
         datatypes::{DataType, Field, Schema, SchemaRef},
         record_batch::RecordBatch,
@@ -20,10 +19,10 @@ use datafusion::{
 use pg_srv::PgType;
 
 struct PgCatalogTypeBuilder {
-    oid: UInt32Builder,
+    oid: Int32Builder,
     typname: StringBuilder,
-    typnamespace: UInt32Builder,
-    typowner: UInt32Builder,
+    typnamespace: Int32Builder,
+    typowner: Int32Builder,
     typlen: Int16Builder,
     typbyval: BooleanBuilder,
     typtype: StringBuilder,
@@ -31,29 +30,37 @@ struct PgCatalogTypeBuilder {
     typisprefered: BooleanBuilder,
     typisdefined: BooleanBuilder,
     typdelim: StringBuilder,
-    typrelid: UInt32Builder,
+    typrelid: Int32Builder,
+    // TODO: type regproc?
     typsubscript: StringBuilder,
-    typelem: UInt32Builder,
-    typarray: UInt32Builder,
-    // TODO: Check
+    typelem: Int32Builder,
+    typarray: Int32Builder,
+    // TODO: type regproc?
     typinput: StringBuilder,
+    // TODO: type regproc?
     typoutput: StringBuilder,
+    // TODO: type regproc?
     // In real tables, it's an additional type, but in pg_proc it's an oid
-    typreceive: UInt32Builder,
+    typreceive: Int32Builder,
+    // TODO: type regproc?
     typsend: StringBuilder,
+    // TODO: type regproc?
     typmodin: StringBuilder,
+    // TODO: type regproc?
     typmodout: StringBuilder,
+    // TODO: type regproc?
     typanalyze: StringBuilder,
     typalign: StringBuilder,
     typstorage: StringBuilder,
     typnotnull: BooleanBuilder,
-    typbasetype: UInt32Builder,
+    typbasetype: Int32Builder,
     typtypmod: Int32Builder,
-    typndims: StringBuilder,
-    typcollation: StringBuilder,
+    typndims: Int32Builder,
+    typcollation: Int32Builder,
+    // TODO: type pg_node_tree?
     typdefaultbin: StringBuilder,
     typdefault: StringBuilder,
-    typacl: StringBuilder,
+    typacl: ListBuilder<StringBuilder>,
 }
 
 impl PgCatalogTypeBuilder {
@@ -61,10 +68,10 @@ impl PgCatalogTypeBuilder {
         let capacity = 10;
 
         Self {
-            oid: UInt32Builder::new(capacity),
+            oid: Int32Builder::new(capacity),
             typname: StringBuilder::new(capacity),
-            typnamespace: UInt32Builder::new(capacity),
-            typowner: UInt32Builder::new(capacity),
+            typnamespace: Int32Builder::new(capacity),
+            typowner: Int32Builder::new(capacity),
             typlen: Int16Builder::new(capacity),
             typbyval: BooleanBuilder::new(capacity),
             typtype: StringBuilder::new(capacity),
@@ -72,12 +79,12 @@ impl PgCatalogTypeBuilder {
             typisprefered: BooleanBuilder::new(capacity),
             typisdefined: BooleanBuilder::new(capacity),
             typdelim: StringBuilder::new(capacity),
-            typrelid: UInt32Builder::new(capacity),
+            typrelid: Int32Builder::new(capacity),
             typsubscript: StringBuilder::new(capacity),
-            typelem: UInt32Builder::new(capacity),
-            typarray: UInt32Builder::new(capacity),
+            typelem: Int32Builder::new(capacity),
+            typarray: Int32Builder::new(capacity),
             // In real tables, it's an additional type, but in pg_proc it's an oid
-            typreceive: UInt32Builder::new(capacity),
+            typreceive: Int32Builder::new(capacity),
             // TODO: Check
             typinput: StringBuilder::new(capacity),
             typoutput: StringBuilder::new(capacity),
@@ -88,13 +95,13 @@ impl PgCatalogTypeBuilder {
             typalign: StringBuilder::new(capacity),
             typstorage: StringBuilder::new(capacity),
             typnotnull: BooleanBuilder::new(capacity),
-            typbasetype: UInt32Builder::new(capacity),
+            typbasetype: Int32Builder::new(capacity),
             typtypmod: Int32Builder::new(capacity),
-            typndims: StringBuilder::new(capacity),
-            typcollation: StringBuilder::new(capacity),
+            typndims: Int32Builder::new(capacity),
+            typcollation: Int32Builder::new(capacity),
             typdefaultbin: StringBuilder::new(capacity),
             typdefault: StringBuilder::new(capacity),
-            typacl: StringBuilder::new(capacity),
+            typacl: ListBuilder::new(StringBuilder::new(capacity)),
         }
     }
 
@@ -114,7 +121,7 @@ impl PgCatalogTypeBuilder {
         self.typsubscript.append_value(typ.typsubscript).unwrap();
         self.typelem.append_value(typ.typelem).unwrap();
         self.typarray.append_value(typ.typarray).unwrap();
-        self.typreceive.append_value(typ.typreceive_oid).unwrap();
+        self.typreceive.append_value(typ.typreceive_oid()).unwrap();
         // TODO: Check
         self.typinput.append_null().unwrap();
         self.typoutput.append_null().unwrap();
@@ -131,7 +138,7 @@ impl PgCatalogTypeBuilder {
         self.typcollation.append_null().unwrap();
         self.typdefaultbin.append_null().unwrap();
         self.typdefault.append_null().unwrap();
-        self.typacl.append_null().unwrap();
+        self.typacl.append(false).unwrap();
     }
 
     fn finish(mut self) -> Vec<Arc<dyn Array>> {
@@ -201,14 +208,10 @@ impl PgCatalogTypeProvider {
                 typsubscript: "-",
                 typelem: 0,
                 typarray: table.array_handler_oid,
-                // TODO Verify
-                typalign: "i",
+                typalign: "d",
                 typstorage: "x",
                 typbasetype: 0,
-                // TODO Verify
-                typreceive: "",
-                // TODO: Get from pg_proc
-                typreceive_oid: 0,
+                typreceive: "record_recv",
             });
 
             builder.add_type(&PgType {
@@ -226,14 +229,10 @@ impl PgCatalogTypeProvider {
                 typsubscript: "array_subscript_handler",
                 typelem: table.record_oid,
                 typarray: 0,
-                // TODO Verify
                 typalign: "d",
                 typstorage: "x",
                 typbasetype: 0,
-                // TODO Verify
-                typreceive: "",
-                // TODO: Get from pg_proc
-                typreceive_oid: 0,
+                typreceive: "array_recv",
             });
         }
 
@@ -255,10 +254,10 @@ impl TableProvider for PgCatalogTypeProvider {
 
     fn schema(&self) -> SchemaRef {
         Arc::new(Schema::new(vec![
-            Field::new("oid", DataType::UInt32, false),
+            Field::new("oid", DataType::Int32, false),
             Field::new("typname", DataType::Utf8, false),
-            Field::new("typnamespace", DataType::UInt32, false),
-            Field::new("typowner", DataType::UInt32, false),
+            Field::new("typnamespace", DataType::Int32, false),
+            Field::new("typowner", DataType::Int32, false),
             Field::new("typlen", DataType::Int16, false),
             Field::new("typbyval", DataType::Boolean, false),
             Field::new("typtype", DataType::Utf8, false),
@@ -266,15 +265,15 @@ impl TableProvider for PgCatalogTypeProvider {
             Field::new("typisprefered", DataType::Boolean, false),
             Field::new("typisdefined", DataType::Boolean, false),
             Field::new("typdelim", DataType::Utf8, true),
-            Field::new("typrelid", DataType::UInt32, true),
+            Field::new("typrelid", DataType::Int32, true),
             Field::new("typsubscript", DataType::Utf8, true),
-            Field::new("typelem", DataType::UInt32, true),
-            Field::new("typarray", DataType::UInt32, true),
+            Field::new("typelem", DataType::Int32, true),
+            Field::new("typarray", DataType::Int32, true),
             // TODO: Check
             Field::new("typinput", DataType::Utf8, true),
             Field::new("typoutput", DataType::Utf8, true),
             // In real tables, it's an additional type, but in pg_proc it's an oid
-            Field::new("typreceive", DataType::UInt32, true),
+            Field::new("typreceive", DataType::Int32, true),
             Field::new("typsend", DataType::Utf8, true),
             Field::new("typmodin", DataType::Utf8, true),
             Field::new("typmodout", DataType::Utf8, true),
@@ -282,13 +281,17 @@ impl TableProvider for PgCatalogTypeProvider {
             Field::new("typalign", DataType::Utf8, true),
             Field::new("typstorage", DataType::Utf8, true),
             Field::new("typnotnull", DataType::Boolean, true),
-            Field::new("typbasetype", DataType::UInt32, true),
+            Field::new("typbasetype", DataType::Int32, true),
             Field::new("typtypmod", DataType::Int32, true),
-            Field::new("typndims", DataType::Utf8, true),
-            Field::new("typcollation", DataType::Utf8, true),
+            Field::new("typndims", DataType::Int32, true),
+            Field::new("typcollation", DataType::Int32, true),
             Field::new("typdefaultbin", DataType::Utf8, true),
             Field::new("typdefault", DataType::Utf8, true),
-            Field::new("typacl", DataType::Utf8, true),
+            Field::new(
+                "typacl",
+                DataType::List(Box::new(Field::new("item", DataType::Utf8, true))),
+                true,
+            ),
         ]))
     }
 

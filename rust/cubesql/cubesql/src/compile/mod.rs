@@ -2515,7 +2515,9 @@ impl CompiledQuery {
                     None,
                     meta_field.column_from.as_str(),
                     match meta_field.column_type {
-                        ColumnType::Int32 | ColumnType::Int64 => DataType::Int64,
+                        ColumnType::Int16 | ColumnType::Int32 | ColumnType::Int64 => {
+                            DataType::Int64
+                        }
                         ColumnType::String => DataType::Utf8,
                         ColumnType::Double => DataType::Float64,
                         ColumnType::Int8 => DataType::Boolean,
@@ -6017,7 +6019,9 @@ ORDER BY \"COUNT(count)\" DESC"
         insta::assert_snapshot!(
             "information_schema_tables_postgres",
             execute_query(
-                "SELECT * FROM information_schema.tables".to_string(),
+                "SELECT * FROM information_schema.tables
+                ORDER BY table_catalog ASC, table_schema ASC, table_name ASC"
+                    .to_string(),
                 DatabaseProtocol::PostgreSQL
             )
             .await?
@@ -6031,7 +6035,9 @@ ORDER BY \"COUNT(count)\" DESC"
         insta::assert_snapshot!(
             "information_schema_columns_postgres",
             execute_query(
-                "SELECT * FROM information_schema.columns".to_string(),
+                "SELECT * FROM information_schema.columns
+                ORDER BY table_catalog ASC, table_schema ASC, table_name ASC, ordinal_position ASC"
+                    .to_string(),
                 DatabaseProtocol::PostgreSQL
             )
             .await?
@@ -6157,7 +6163,9 @@ ORDER BY \"COUNT(count)\" DESC"
         insta::assert_snapshot!(
             "pgcatalog_pgrange_postgres",
             execute_query(
-                "SELECT * FROM pg_catalog.pg_range".to_string(),
+                "SELECT * FROM pg_catalog.pg_range
+                ORDER BY rngtypid ASC"
+                    .to_string(),
                 DatabaseProtocol::PostgreSQL
             )
             .await?
@@ -6185,7 +6193,9 @@ ORDER BY \"COUNT(count)\" DESC"
         insta::assert_snapshot!(
             "pgcatalog_pgattribute_postgres",
             execute_query(
-                "SELECT * FROM pg_catalog.pg_attribute".to_string(),
+                "SELECT * FROM pg_catalog.pg_attribute
+                ORDER BY attrelid ASC, attnum ASC"
+                    .to_string(),
                 DatabaseProtocol::PostgreSQL
             )
             .await?
@@ -6213,7 +6223,9 @@ ORDER BY \"COUNT(count)\" DESC"
         insta::assert_snapshot!(
             "pgcatalog_pgclass_postgres",
             execute_query(
-                "SELECT * FROM pg_catalog.pg_class".to_string(),
+                "SELECT * FROM pg_catalog.pg_class
+                ORDER BY oid ASC"
+                    .to_string(),
                 DatabaseProtocol::PostgreSQL
             )
             .await?
@@ -6227,7 +6239,9 @@ ORDER BY \"COUNT(count)\" DESC"
         insta::assert_snapshot!(
             "pgcatalog_pgproc_postgres",
             execute_query(
-                "SELECT * FROM pg_catalog.pg_proc".to_string(),
+                "SELECT * FROM pg_catalog.pg_proc
+                ORDER BY oid ASC"
+                    .to_string(),
                 DatabaseProtocol::PostgreSQL
             )
             .await?

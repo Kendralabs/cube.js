@@ -4,7 +4,7 @@ use async_trait::async_trait;
 
 use datafusion::{
     arrow::{
-        array::{Array, ArrayRef, Int32Builder, StringBuilder, UInt32Builder},
+        array::{Array, ArrayRef, Int32Builder, StringBuilder},
         datatypes::{DataType, Field, Schema, SchemaRef},
         record_batch::RecordBatch,
     },
@@ -15,8 +15,8 @@ use datafusion::{
 };
 
 struct PgCatalogDescriptionBuilder {
-    objoid: UInt32Builder,
-    classoid: UInt32Builder,
+    objoid: Int32Builder,
+    classoid: Int32Builder,
     objsubid: Int32Builder,
     description: StringBuilder,
 }
@@ -26,8 +26,8 @@ impl PgCatalogDescriptionBuilder {
         let capacity = 10;
 
         Self {
-            objoid: UInt32Builder::new(capacity),
-            classoid: UInt32Builder::new(capacity),
+            objoid: Int32Builder::new(capacity),
+            classoid: Int32Builder::new(capacity),
             objsubid: Int32Builder::new(capacity),
             description: StringBuilder::new(capacity),
         }
@@ -71,9 +71,9 @@ impl TableProvider for PgCatalogDescriptionProvider {
 
     fn schema(&self) -> SchemaRef {
         Arc::new(Schema::new(vec![
-            Field::new("objoid", DataType::UInt32, false),
-            Field::new("classoid", DataType::UInt32, false),
-            Field::new("objsubid", DataType::Int32, false),
+            Field::new("objoid", DataType::Int32, true),
+            Field::new("classoid", DataType::Int32, true),
+            Field::new("objsubid", DataType::Int32, true),
             Field::new("description", DataType::Utf8, false),
         ]))
     }

@@ -5,8 +5,7 @@ use async_trait::async_trait;
 use datafusion::{
     arrow::{
         array::{
-            Array, ArrayRef, BooleanBuilder, Int16Builder, Int32Builder, StringBuilder,
-            UInt32Builder,
+            Array, ArrayRef, BooleanBuilder, Int16Builder, Int32Builder, ListBuilder, StringBuilder,
         },
         datatypes::{DataType, Field, Schema, SchemaRef},
         record_batch::RecordBatch,
@@ -19,13 +18,13 @@ use datafusion::{
 use pg_srv::PgType;
 
 struct PgCatalogAttributeBuilder {
-    attrelid: UInt32Builder,
+    attrelid: Int32Builder,
     attname: StringBuilder,
-    atttypid: UInt32Builder,
+    atttypid: Int32Builder,
     attstattarget: Int32Builder,
     attlen: Int16Builder,
     attnum: Int16Builder,
-    attndims: UInt32Builder,
+    attndims: Int32Builder,
     attcacheoff: Int32Builder,
     atttypmod: Int32Builder,
     attbyval: BooleanBuilder,
@@ -39,11 +38,12 @@ struct PgCatalogAttributeBuilder {
     attgenerated: StringBuilder,
     attisdropped: BooleanBuilder,
     attislocal: BooleanBuilder,
-    attinhcount: UInt32Builder,
-    attcollation: UInt32Builder,
-    attacl: StringBuilder,
-    attoptions: StringBuilder,
-    attfdwoptions: StringBuilder,
+    attinhcount: Int32Builder,
+    attcollation: Int32Builder,
+    attacl: ListBuilder<StringBuilder>,
+    attoptions: ListBuilder<StringBuilder>,
+    attfdwoptions: ListBuilder<StringBuilder>,
+    // TODO: type anyarray?
     attmissingval: StringBuilder,
 }
 
@@ -52,13 +52,13 @@ impl PgCatalogAttributeBuilder {
         let capacity = 10;
 
         Self {
-            attrelid: UInt32Builder::new(capacity),
+            attrelid: Int32Builder::new(capacity),
             attname: StringBuilder::new(capacity),
-            atttypid: UInt32Builder::new(capacity),
+            atttypid: Int32Builder::new(capacity),
             attstattarget: Int32Builder::new(capacity),
             attlen: Int16Builder::new(capacity),
             attnum: Int16Builder::new(capacity),
-            attndims: UInt32Builder::new(capacity),
+            attndims: Int32Builder::new(capacity),
             attcacheoff: Int32Builder::new(capacity),
             atttypmod: Int32Builder::new(capacity),
             attbyval: BooleanBuilder::new(capacity),
@@ -72,18 +72,18 @@ impl PgCatalogAttributeBuilder {
             attgenerated: StringBuilder::new(capacity),
             attisdropped: BooleanBuilder::new(capacity),
             attislocal: BooleanBuilder::new(capacity),
-            attinhcount: UInt32Builder::new(capacity),
-            attcollation: UInt32Builder::new(capacity),
-            attacl: StringBuilder::new(capacity),
-            attoptions: StringBuilder::new(capacity),
-            attfdwoptions: StringBuilder::new(capacity),
+            attinhcount: Int32Builder::new(capacity),
+            attcollation: Int32Builder::new(capacity),
+            attacl: ListBuilder::new(StringBuilder::new(capacity)),
+            attoptions: ListBuilder::new(StringBuilder::new(capacity)),
+            attfdwoptions: ListBuilder::new(StringBuilder::new(capacity)),
             attmissingval: StringBuilder::new(capacity),
         }
     }
 
     fn add_attribute(
         &mut self,
-        attrelid: u32,
+        attrelid: i32,
         attname: impl AsRef<str>,
         column_type: &ColumnType,
         attnum: i16,
@@ -92,14 +92,13 @@ impl PgCatalogAttributeBuilder {
     ) {
         let pg_typ = PgType::get_by_tid(column_type.to_pg_tid());
 
-        // TODO: get data from pg_type description
         self.attrelid.append_value(attrelid).unwrap();
         self.attname.append_value(attname.as_ref()).unwrap();
         self.atttypid.append_value(pg_typ.oid).unwrap();
         self.attstattarget.append_value(0).unwrap();
         self.attlen.append_value(pg_typ.typlen).unwrap();
         self.attnum.append_value(attnum).unwrap();
-        self.attndims.append_value(is_array as u32).unwrap();
+        self.attndims.append_value(is_array as i32).unwrap();
         self.attcacheoff.append_value(-1).unwrap();
         self.atttypmod.append_value(-1).unwrap();
         self.attbyval.append_value(pg_typ.typbyval).unwrap();
@@ -116,9 +115,9 @@ impl PgCatalogAttributeBuilder {
         self.attinhcount.append_value(0).unwrap();
         // FIXME: attcollation should be equal to pg_catalog.pg_collation.oid if type is collatable, 0 otherwise
         self.attcollation.append_value(0).unwrap();
-        self.attacl.append_null().unwrap();
-        self.attoptions.append_null().unwrap();
-        self.attfdwoptions.append_null().unwrap();
+        self.attacl.append(false).unwrap();
+        self.attoptions.append(false).unwrap();
+        self.attfdwoptions.append(false).unwrap();
         self.attmissingval.append_null().unwrap();
     }
 
@@ -164,17 +163,16 @@ impl PgCatalogAttributeProvider {
         let mut builder = PgCatalogAttributeBuilder::new();
 
         for table in tables {
-            let mut column_id = 1;
+            let mut column_id = 1..;
             for column in &table.columns {
                 builder.add_attribute(
                     table.oid,
                     &column.name,
                     &column.column_type,
-                    column_id,
+                    column_id.next().unwrap_or(0),
                     false,
                     !column.can_be_null,
                 );
-                column_id += 1;
             }
         }
 
@@ -196,13 +194,13 @@ impl TableProvider for PgCatalogAttributeProvider {
 
     fn schema(&self) -> SchemaRef {
         Arc::new(Schema::new(vec![
-            Field::new("attrelid", DataType::UInt32, false),
+            Field::new("attrelid", DataType::Int32, true),
             Field::new("attname", DataType::Utf8, false),
-            Field::new("atttypid", DataType::UInt32, false),
+            Field::new("atttypid", DataType::Int32, false),
             Field::new("attstattarget", DataType::Int32, false),
             Field::new("attlen", DataType::Int16, false),
             Field::new("attnum", DataType::Int16, true),
-            Field::new("attndims", DataType::UInt32, false),
+            Field::new("attndims", DataType::Int32, false),
             Field::new("attcacheoff", DataType::Int32, false),
             Field::new("atttypmod", DataType::Int32, false),
             Field::new("attbyval", DataType::Boolean, false),
@@ -216,11 +214,23 @@ impl TableProvider for PgCatalogAttributeProvider {
             Field::new("attgenerated", DataType::Utf8, false),
             Field::new("attisdropped", DataType::Boolean, false),
             Field::new("attislocal", DataType::Boolean, false),
-            Field::new("attinhcount", DataType::UInt32, false),
-            Field::new("attcollation", DataType::UInt32, false),
-            Field::new("attacl", DataType::Utf8, true),
-            Field::new("attoptions", DataType::Utf8, true),
-            Field::new("attfdwoptions", DataType::Utf8, true),
+            Field::new("attinhcount", DataType::Int32, false),
+            Field::new("attcollation", DataType::Int32, false),
+            Field::new(
+                "attacl",
+                DataType::List(Box::new(Field::new("item", DataType::Utf8, true))),
+                true,
+            ),
+            Field::new(
+                "attoptions",
+                DataType::List(Box::new(Field::new("item", DataType::Utf8, true))),
+                true,
+            ),
+            Field::new(
+                "attfdwoptions",
+                DataType::List(Box::new(Field::new("item", DataType::Utf8, true))),
+                true,
+            ),
             Field::new("attmissingval", DataType::Utf8, true),
         ]))
     }

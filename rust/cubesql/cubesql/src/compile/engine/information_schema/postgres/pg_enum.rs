@@ -4,7 +4,7 @@ use async_trait::async_trait;
 
 use datafusion::{
     arrow::{
-        array::{Array, ArrayRef, Float32Builder, StringBuilder, UInt32Builder},
+        array::{Array, ArrayRef, Float32Builder, Int32Builder, StringBuilder},
         datatypes::{DataType, Field, Schema, SchemaRef},
         record_batch::RecordBatch,
     },
@@ -15,8 +15,8 @@ use datafusion::{
 };
 
 struct PgCatalogEnumBuilder {
-    oid: UInt32Builder,
-    enumtypid: UInt32Builder,
+    oid: Int32Builder,
+    enumtypid: Int32Builder,
     enumsortorder: Float32Builder,
     enumlabel: StringBuilder,
 }
@@ -26,8 +26,8 @@ impl PgCatalogEnumBuilder {
         let capacity = 1;
 
         Self {
-            oid: UInt32Builder::new(capacity),
-            enumtypid: UInt32Builder::new(capacity),
+            oid: Int32Builder::new(capacity),
+            enumtypid: Int32Builder::new(capacity),
             enumsortorder: Float32Builder::new(capacity),
             enumlabel: StringBuilder::new(capacity),
         }
@@ -71,8 +71,8 @@ impl TableProvider for PgCatalogEnumProvider {
 
     fn schema(&self) -> SchemaRef {
         Arc::new(Schema::new(vec![
-            Field::new("oid", DataType::UInt32, false),
-            Field::new("enumtypid", DataType::UInt32, false),
+            Field::new("oid", DataType::Int32, false),
+            Field::new("enumtypid", DataType::Int32, false),
             Field::new("enumsortorder", DataType::Float32, false),
             Field::new("enumlabel", DataType::Utf8, false),
         ]))

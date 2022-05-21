@@ -314,13 +314,11 @@ pub fn arrow_to_column_type(arrow_type: DataType) -> Result<ColumnType, CubeErro
         DataType::Float16 | DataType::Float32 | DataType::Float64 => Ok(ColumnType::Double),
         DataType::Boolean => Ok(ColumnType::Boolean),
         DataType::List(field) => Ok(ColumnType::List(field)),
+        DataType::Int8 | DataType::UInt8 | DataType::Int16 | DataType::UInt16 => {
+            Ok(ColumnType::Int16)
+        }
         DataType::Int32 | DataType::UInt32 => Ok(ColumnType::Int32),
-        DataType::Int8
-        | DataType::Int16
-        | DataType::Int64
-        | DataType::UInt8
-        | DataType::UInt16
-        | DataType::UInt64 => Ok(ColumnType::Int64),
+        DataType::Int64 | DataType::UInt64 => Ok(ColumnType::Int64),
         x => Err(CubeError::internal(format!("unsupported type {:?}", x))),
     }
 }

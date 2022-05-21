@@ -4,7 +4,10 @@ use async_trait::async_trait;
 
 use datafusion::{
     arrow::{
-        array::{Array, ArrayRef, BooleanBuilder, Int32Builder, StringBuilder, UInt32Builder},
+        array::{
+            Array, ArrayRef, BooleanBuilder, Float32Builder, Int16Builder, Int32Builder,
+            ListBuilder, StringBuilder,
+        },
         datatypes::{DataType, Field, Schema, SchemaRef},
         record_batch::RecordBatch,
     },
@@ -18,42 +21,42 @@ use mysql_common::bigdecimal::ToPrimitive;
 use crate::compile::CubeMetaTable;
 
 struct PgClass {
-    oid: u32,
+    oid: i32,
     relname: String,
-    relnamespace: u32,
-    reltype: u32,
-    relam: u32,
-    relfilenode: u32,
-    reltoastrelid: u32,
+    relnamespace: i32,
+    reltype: i32,
+    relam: i32,
+    relfilenode: i32,
+    reltoastrelid: i32,
     relisshared: bool,
-    relkind: String,
-    relnatts: i32,
+    relkind: &'static str,
+    relnatts: i16,
     relhasrules: bool,
-    relreplident: String,
+    relreplident: &'static str,
     relfrozenxid: i32,
     relminmxid: i32,
 }
 
 struct PgCatalogClassBuilder {
-    oid: UInt32Builder,
+    oid: Int32Builder,
     relname: StringBuilder,
-    relnamespace: UInt32Builder,
-    reltype: UInt32Builder,
-    reloftype: UInt32Builder,
-    relowner: UInt32Builder,
-    relam: UInt32Builder,
-    relfilenode: UInt32Builder,
-    reltablespace: UInt32Builder,
+    relnamespace: Int32Builder,
+    reltype: Int32Builder,
+    reloftype: Int32Builder,
+    relowner: Int32Builder,
+    relam: Int32Builder,
+    relfilenode: Int32Builder,
+    reltablespace: Int32Builder,
     relpages: Int32Builder,
-    reltuples: Int32Builder,
+    reltuples: Float32Builder,
     relallvisible: Int32Builder,
-    reltoastrelid: UInt32Builder,
+    reltoastrelid: Int32Builder,
     relhasindex: BooleanBuilder,
     relisshared: BooleanBuilder,
     relpersistence: StringBuilder,
     relkind: StringBuilder,
-    relnatts: Int32Builder,
-    relchecks: Int32Builder,
+    relnatts: Int16Builder,
+    relchecks: Int16Builder,
     relhasrules: BooleanBuilder,
     relhastriggers: BooleanBuilder,
     relhassubclass: BooleanBuilder,
@@ -62,11 +65,12 @@ struct PgCatalogClassBuilder {
     relispopulated: BooleanBuilder,
     relreplident: StringBuilder,
     relispartition: BooleanBuilder,
-    relrewrite: UInt32Builder,
+    relrewrite: Int32Builder,
     relfrozenxid: Int32Builder,
     relminmxid: Int32Builder,
-    relacl: StringBuilder,
-    reloptions: StringBuilder,
+    relacl: ListBuilder<StringBuilder>,
+    reloptions: ListBuilder<StringBuilder>,
+    // TODO: type pg_node_tree?
     relpartbound: StringBuilder,
 }
 
@@ -75,25 +79,25 @@ impl PgCatalogClassBuilder {
         let capacity = 10;
 
         Self {
-            oid: UInt32Builder::new(capacity),
+            oid: Int32Builder::new(capacity),
             relname: StringBuilder::new(capacity),
-            relnamespace: UInt32Builder::new(capacity),
-            reltype: UInt32Builder::new(capacity),
-            reloftype: UInt32Builder::new(capacity),
-            relowner: UInt32Builder::new(capacity),
-            relam: UInt32Builder::new(capacity),
-            relfilenode: UInt32Builder::new(capacity),
-            reltablespace: UInt32Builder::new(capacity),
+            relnamespace: Int32Builder::new(capacity),
+            reltype: Int32Builder::new(capacity),
+            reloftype: Int32Builder::new(capacity),
+            relowner: Int32Builder::new(capacity),
+            relam: Int32Builder::new(capacity),
+            relfilenode: Int32Builder::new(capacity),
+            reltablespace: Int32Builder::new(capacity),
             relpages: Int32Builder::new(capacity),
-            reltuples: Int32Builder::new(capacity),
+            reltuples: Float32Builder::new(capacity),
             relallvisible: Int32Builder::new(capacity),
-            reltoastrelid: UInt32Builder::new(capacity),
+            reltoastrelid: Int32Builder::new(capacity),
             relhasindex: BooleanBuilder::new(capacity),
             relisshared: BooleanBuilder::new(capacity),
             relpersistence: StringBuilder::new(capacity),
             relkind: StringBuilder::new(capacity),
-            relnatts: Int32Builder::new(capacity),
-            relchecks: Int32Builder::new(capacity),
+            relnatts: Int16Builder::new(capacity),
+            relchecks: Int16Builder::new(capacity),
             relhasrules: BooleanBuilder::new(capacity),
             relhastriggers: BooleanBuilder::new(capacity),
             relhassubclass: BooleanBuilder::new(capacity),
@@ -102,11 +106,11 @@ impl PgCatalogClassBuilder {
             relispopulated: BooleanBuilder::new(capacity),
             relreplident: StringBuilder::new(capacity),
             relispartition: BooleanBuilder::new(capacity),
-            relrewrite: UInt32Builder::new(capacity),
+            relrewrite: Int32Builder::new(capacity),
             relfrozenxid: Int32Builder::new(capacity),
             relminmxid: Int32Builder::new(capacity),
-            relacl: StringBuilder::new(capacity),
-            reloptions: StringBuilder::new(capacity),
+            relacl: ListBuilder::new(StringBuilder::new(capacity)),
+            reloptions: ListBuilder::new(StringBuilder::new(capacity)),
             relpartbound: StringBuilder::new(capacity),
         }
     }
@@ -121,8 +125,8 @@ impl PgCatalogClassBuilder {
         self.relam.append_value(class.relam).unwrap();
         self.relfilenode.append_value(class.relfilenode).unwrap();
         self.reltablespace.append_value(0).unwrap();
-        self.relpages.append_value(0).unwrap();
-        self.reltuples.append_value(-1).unwrap();
+        self.relpages.append_value(1).unwrap();
+        self.reltuples.append_value(-1.0).unwrap();
         self.relallvisible.append_value(0).unwrap();
         self.reltoastrelid
             .append_value(class.reltoastrelid)
@@ -144,8 +148,8 @@ impl PgCatalogClassBuilder {
         self.relrewrite.append_value(0).unwrap();
         self.relfrozenxid.append_value(class.relfrozenxid).unwrap();
         self.relminmxid.append_value(class.relminmxid).unwrap();
-        self.relacl.append_null().unwrap();
-        self.reloptions.append_null().unwrap();
+        self.relacl.append(false).unwrap();
+        self.reloptions.append(false).unwrap();
         self.relpartbound.append_null().unwrap();
     }
 
@@ -207,11 +211,11 @@ impl PgCatalogClassProvider {
                 relfilenode: 0,
                 reltoastrelid: 0,
                 relisshared: false,
-                relkind: "r".to_string(),
-                relnatts: table.columns.len().to_i32().unwrap_or(0),
+                relkind: "r",
+                relnatts: table.columns.len().to_i16().unwrap_or(0),
                 relhasrules: false,
-                relreplident: "p".to_string(),
-                relfrozenxid: 0,
+                relreplident: "d",
+                relfrozenxid: 1,
                 relminmxid: 1,
             });
         }
@@ -234,23 +238,23 @@ impl TableProvider for PgCatalogClassProvider {
 
     fn schema(&self) -> SchemaRef {
         Arc::new(Schema::new(vec![
-            Field::new("oid", DataType::UInt32, false),
+            Field::new("oid", DataType::Int32, false),
             Field::new("relname", DataType::Utf8, false),
             // info_schma: 13000; pg_catalog: 11; user defined tables: 2200
-            Field::new("relnamespace", DataType::UInt32, false),
-            Field::new("reltype", DataType::UInt32, false),
-            Field::new("reloftype", DataType::UInt32, false),
-            Field::new("relowner", DataType::UInt32, false),
+            Field::new("relnamespace", DataType::Int32, false),
+            Field::new("reltype", DataType::Int32, false),
+            Field::new("reloftype", DataType::Int32, false),
+            Field::new("relowner", DataType::Int32, false),
             //user defined tables: 2; system tables: 0 | 2
-            Field::new("relam", DataType::UInt32, false),
+            Field::new("relam", DataType::Int32, false),
             // TODO: to check that 0 if fine
-            Field::new("relfilenode", DataType::UInt32, false),
-            Field::new("reltablespace", DataType::UInt32, false),
+            Field::new("relfilenode", DataType::Int32, false),
+            Field::new("reltablespace", DataType::Int32, false),
             Field::new("relpages", DataType::Int32, false),
-            Field::new("reltuples", DataType::Int32, false),
+            Field::new("reltuples", DataType::Float32, false),
             Field::new("relallvisible", DataType::Int32, false),
             // TODO: sometimes is not 0. Check that 0 is fine
-            Field::new("reltoastrelid", DataType::UInt32, false),
+            Field::new("reltoastrelid", DataType::Int32, false),
             Field::new("relhasindex", DataType::Boolean, false),
             //user defined tables: FALSE; system tables: FALSE | TRUE
             Field::new("relisshared", DataType::Boolean, false),
@@ -258,8 +262,8 @@ impl TableProvider for PgCatalogClassProvider {
             // Tables: r; Views: v
             Field::new("relkind", DataType::Utf8, false),
             // number of columns in table
-            Field::new("relnatts", DataType::Int32, false),
-            Field::new("relchecks", DataType::Int32, false),
+            Field::new("relnatts", DataType::Int16, false),
+            Field::new("relchecks", DataType::Int16, false),
             //user defined tables: FALSE; system tables: FALSE | TRUE
             Field::new("relhasrules", DataType::Boolean, false),
             Field::new("relhastriggers", DataType::Boolean, false),
@@ -270,13 +274,21 @@ impl TableProvider for PgCatalogClassProvider {
             //user defined tables: p; system tables: n
             Field::new("relreplident", DataType::Utf8, false),
             Field::new("relispartition", DataType::Boolean, false),
-            Field::new("relrewrite", DataType::UInt32, false),
+            Field::new("relrewrite", DataType::Int32, false),
             // TODO: can be not 0; check that 0 is fine
             Field::new("relfrozenxid", DataType::Int32, false),
             // Tables: 1; Other: v
             Field::new("relminmxid", DataType::Int32, false),
-            Field::new("relacl", DataType::Utf8, true),
-            Field::new("reloptions", DataType::Utf8, true),
+            Field::new(
+                "relacl",
+                DataType::List(Box::new(Field::new("item", DataType::Utf8, true))),
+                true,
+            ),
+            Field::new(
+                "reloptions",
+                DataType::List(Box::new(Field::new("item", DataType::Utf8, true))),
+                true,
+            ),
             Field::new("relpartbound", DataType::Utf8, true),
         ]))
     }
