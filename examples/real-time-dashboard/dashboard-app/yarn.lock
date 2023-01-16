@@ -1382,6 +1382,19 @@
     url-search-params-polyfill "^7.0.0"
     uuid "^8.3.2"
 
+"@cubejs-client/core@^0.31.35":
+  version "0.31.35"
+  resolved "https://registry.yarnpkg.com/@cubejs-client/core/-/core-0.31.35.tgz#e4a1729895501fe41d54714826fec18494d3da9a"
+  integrity sha512-FTLIChvcR+aK1BzpabA8tMDLRpGrrC0P8YXXt2WEqpxfupYniTsTCslKNpoOk+T/fAYkP8Mb6Xqjbn8U6q7pdg==
+  dependencies:
+    "@babel/runtime" "^7.1.2"
+    core-js "^3.6.5"
+    cross-fetch "^3.0.2"
+    dayjs "^1.10.4"
+    ramda "^0.27.2"
+    url-search-params-polyfill "^7.0.0"
+    uuid "^8.3.2"
+
 "@cubejs-client/react@^0.11.12":
   version "0.11.18"
   resolved "https://registry.yarnpkg.com/@cubejs-client/react/-/react-0.11.18.tgz#db72a38d5d7a087ac45deefccb714651a9fd35a8"
@@ -1391,14 +1404,16 @@
     core-js "^2.5.3"
     ramda "^0.25.0"
 
-"@cubejs-client/ws-transport@^0.11.7":
-  version "0.11.18"
-  resolved "https://registry.yarnpkg.com/@cubejs-client/ws-transport/-/ws-transport-0.11.18.tgz#af20246bf829fac3aa4e1fa04eb534e35be48dde"
-  integrity sha512-HaArub9gQUl4/Ddn3aB38M7RaBeYsfd2nmmtPu5f5SGADrnyAPEBkCXXtC4FNys+LBo3umnlbq4Jkz9tHhd4HQ==
+"@cubejs-client/ws-transport@^0.31.30":
+  version "0.31.35"
+  resolved "https://registry.yarnpkg.com/@cubejs-client/ws-transport/-/ws-transport-0.31.35.tgz#efca335a48763755354720351d1455a165d3f8ef"
+  integrity sha512-KxClSthQiVu/q+Ihgdbyo8k3E/EGm6+Ah5/mz5Iczlqz+4UgvzTxkvPTIEwHiEMEczk7BcirJtxqluf77/JjvA==
   dependencies:
     "@babel/runtime" "^7.1.2"
-    core-js "^2.5.3"
+    "@cubejs-client/core" "^0.31.35"
+    core-js "^3.6.5"
     isomorphic-ws "^4.0.1"
+    ws "^7.3.1"
 
 "@hapi/address@2.x.x":
   version "2.1.4"
@@ -9216,7 +9231,7 @@ ramda@^0.25.0:
   resolved "https://registry.yarnpkg.com/ramda/-/ramda-0.25.0.tgz#8fdf68231cffa90bc2f9460390a0cb74a29b29a9"
   integrity sha512-GXpfrYVPwx3K7RQ6aYT8KPS8XViSXUVJT1ONhoKPE9VAleW42YE+U+8VEyGWt41EnEQW7gwecYJriTI0pKoecQ==
 
-ramda@^0.27.0:
+ramda@^0.27.0, ramda@^0.27.2:
   version "0.27.2"
   resolved "https://registry.yarnpkg.com/ramda/-/ramda-0.27.2.tgz#84463226f7f36dc33592f6f4ed6374c48306c3f1"
   integrity sha512-SbiLPU40JuJniHexQSAgad32hfwd+DRUdwF2PlVuI5RZD0/vahUco7R8vD86J/tcEKKF9vZrUVwgtmGCqlCKyA==
@@ -12043,6 +12058,11 @@ ws@^6.1.2, ws@^6.2.1:
   integrity sha512-GIyAXC2cB7LjvpgMt9EKS2ldqr0MTrORaleiOno6TweZ6r3TKtoFQWay/2PceJ3RuBasOHzXNn5Lrw1X0bEjqA==
   dependencies:
     async-limiter "~1.0.0"
+
+ws@^7.3.1:
+  version "7.5.9"
+  resolved "https://registry.yarnpkg.com/ws/-/ws-7.5.9.tgz#54fa7db29f4c7cec68b1ddd3a89de099942bb591"
+  integrity sha512-F+P9Jil7UiSKSkppIiD94dN07AwvFixvLIj1Og1Rl9GGMuNipJnV9JzjD6XuqmAeiswGvUmNLjr5cFuXwNS77Q==
 
 xml-name-validator@^3.0.0:
   version "3.0.0"
