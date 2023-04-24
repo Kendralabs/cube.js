@@ -23,7 +23,7 @@
   "dependencies": {
     "@cubejs-backend/query-orchestrator": "^0.30.4",
     "@types/mysql": "^2.15.15",
-    "aws-sdk": "^2.787.0",
+    "aws-sdk": "^2.1354.0",
     "data-api-client": "^1.1.0"
   },
   "devDependencies": {
