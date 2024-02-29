@@ -32,7 +32,7 @@
   ],
   "dependencies": {
     "@cubejs-backend/shared": "^0.30.1",
-    "es5-ext": "0.10.53",
+    "es5-ext": "0.10.63",
     "generic-pool": "^3.7.1",
     "ioredis": "^4.27.8",
     "lru-cache": "^6.0.0",
