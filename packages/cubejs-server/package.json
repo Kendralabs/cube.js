@@ -54,7 +54,7 @@
     "body-parser": "^1.19.0",
     "codesandbox-import-utils": "^2.1.12",
     "cors": "^2.8.4",
-    "express": "^4.17.1",
+    "express": "^4.19.2",
     "jsonwebtoken": "^8.4.0",
     "semver": "^7.3.2",
     "source-map-support": "^0.5.19",
