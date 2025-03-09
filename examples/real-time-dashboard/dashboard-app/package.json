@@ -6,7 +6,7 @@
     "@cube-dev/example-wrapper": "^1.1.10",
     "@cubejs-client/core": "^0.11.10",
     "@cubejs-client/react": "^0.11.12",
-    "@cubejs-client/ws-transport": "^0.11.7",
+    "@cubejs-client/ws-transport": "^0.31.30",
     "antd": "^3.24.3",
     "chart.js": "^2.9.1",
     "component-cookie": "^1.1.4",
